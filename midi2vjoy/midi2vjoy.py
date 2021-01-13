@@ -187,7 +187,7 @@ def main():
 	parser.add_option("-q", "--quiet",
 						  action="store_false", dest="verbose")
 	global options
-	(options, args) = parser.parse_args()
+	(options, args) = parser.parse_args(["-t"])
 	
 	pygame.midi.init()
 	
