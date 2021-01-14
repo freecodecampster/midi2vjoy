@@ -32,8 +32,15 @@ axis = {'X': 0x30, 'Y': 0x31, 'Z': 0x32, 'RX': 0x33, 'RY': 0x34, 'RZ': 0x35,
 		
 # Globals
 options = None
+# Behringer X-Touch Mini
+# m_type is the 186 (slider) or 154 (button on), 138 (button off).
+slider = 186
+button_on = 154
+button_off = 138
 
 def midi_test():
+	if options.verbose:
+			print("You have selected MIDI test mode")
 	n = pygame.midi.get_count()
 
 	# List all the devices and make a choice
@@ -57,16 +64,19 @@ def midi_test():
 		m.close()
 		
 def read_conf(conf_file):
-	'''Read the configuration file'''
+	if options.verbose:
+			print("Read the configuration file")
 	table = {}
 	vids = []
 	with open(conf_file, 'r') as f:
+		if options.verbose:
+			print("got this far")
 		for l in f:
 			if len(l.strip()) == 0 or l[0] == '#':
 				continue
 			fs = l.split()
 			key = (int(fs[0]), int(fs[1]))
-			if fs[0] == '144':
+			if fs[0] == button_on:
 				val = (int(fs[2]), int(fs[3]))
 			else:
 				val = (int(fs[2]), fs[3])
@@ -77,6 +87,8 @@ def read_conf(conf_file):
 	return (table, vids)
 		
 def joystick_run():
+	if options.verbose:
+			print("Verbose mode selected")
 	# Process the configuration file
 	if options.conf == None:
 		print('Must specify a configuration file')
@@ -143,7 +155,7 @@ def joystick_run():
 				opt = table[key]
 				if options.verbose:
 					print(key, '->', opt, reading)
-				if key[0] == 176:
+				if key[0] == slider:
 					# A slider input
 					# Check that the output axis is valid
 					# Note: We did not check if that axis is defined in vJoy
@@ -151,10 +163,10 @@ def joystick_run():
 						continue
 					reading = (reading + 1) << 8
 					vjoy.SetAxis(reading, opt[0], axis[opt[1]])
-				elif key[0] == 144:
+				elif key[0] == button_on:
 					# A button input
 					vjoy.SetBtn(reading, opt[0], int(opt[1]))
-				elif key[0] == 128:
+				elif key[0] == button_off:
 					# A button off input
 					vjoy.SetBtn(reading, opt[0], int(opt[1]))
 			time.sleep(0.1)
@@ -187,7 +199,18 @@ def main():
 	parser.add_option("-q", "--quiet",
 						  action="store_false", dest="verbose")
 	global options
-	(options, args) = parser.parse_args(["-t"])
+
+	# Provide fake command line arguments so as to run in Visual Studio Code
+
+	# MIDI Testing
+	#fake_args_array = ["-t","-v"]
+
+	# Run the configuration
+	midi_device_number = "1"
+	configuration_file = "midi2vjoy\\xtouchmini.conf"
+	fake_args_array = ["-m",midi_device_number,"-c",configuration_file,"-v"]
+
+	(options, args) = parser.parse_args(fake_args_array)
 	
 	pygame.midi.init()
 	
